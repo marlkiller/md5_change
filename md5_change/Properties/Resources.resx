@@ -114,4 +114,19 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="strip_stopping" xml:space="preserve">
+    <value>停止中..</value>
+  </data>
+  <data name="stop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="operation_complete" xml:space="preserve">
+    <value>执行完毕</value>
+  </data>
+  <data name="file_empty" xml:space="preserve">
+    <value>当前文件列表为空,请添加!</value>
+  </data>
+  <data name="plz_append_file" xml:space="preserve">
+    <value>请添加文件!</value>
+  </data>
 </root>

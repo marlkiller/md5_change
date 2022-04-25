@@ -1,21 +1,22 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using md5_change.Properties;
 
 namespace md5_change
 {
     public partial class Form1 : Form
     {
-        public bool statu = false;
-        private static object _lock = new object();
+        private bool _status;
+        private Thread _thread;
 
         // 循环等待时间:单位秒
-        private static int waitTime = 1;
-
-        Thread thread;
+        private static readonly object Lock = new object();
+        private const int WaitTime = 1;
 
 
         public Form1()
@@ -27,60 +28,63 @@ namespace md5_change
         {
             Control.CheckForIllegalCrossThreadCalls = false;
             //AppendFile("C:\\Users\\voidm\\Desktop\\dev\\tmp\\Jar2Exe_src.msi");
-            lable_msg.Text = "请添加文件!";
-
-
+            lable_msg.Text = Resources.plz_append_file;
         }
 
-        private void AppendFile(string file)
+        private void AppendFile(string fileName)
         {
-            if (IsExistsItem(file))
+            if (IsExistsItem(fileName))
             {
                 return;
             }
 
-            string msg = "";
-            ListViewItem item = new ListViewItem(file);
-            ListViewItem.ListViewSubItem itemMd5Src = new ListViewItem.ListViewSubItem();
-            try 
-            { 
-                itemMd5Src.Text = GetMD5HashFromFile(file);
-            }catch(Exception ex)
-            {
-                msg = ex.Message;
-                itemMd5Src.Text = "";
-            }
-            item.SubItems.Add(itemMd5Src);
-
-            ListViewItem.ListViewSubItem itemMd5New = new ListViewItem.ListViewSubItem();
-            itemMd5New.Text = "";
-            item.SubItems.Add(itemMd5New);
-
-            ListViewItem.ListViewSubItem itemLen = new ListViewItem.ListViewSubItem();
+            var itemMsg = "";
+            var item = new ListViewItem(fileName);
+            var itemMd5Src = new ListViewItem.ListViewSubItem();
             try
             {
-                itemLen.Text = GetLenFile(file).ToString();
+                itemMd5Src.Text = GetMd5HashFromFile(fileName);
             }
             catch (Exception ex)
             {
-                msg = ex.Message;
+                itemMsg = ex.Message;
+                itemMd5Src.Text = "";
+            }
+
+            item.SubItems.Add(itemMd5Src);
+
+            var itemMd5New = new ListViewItem.ListViewSubItem
+            {
+                Text = ""
+            };
+            item.SubItems.Add(itemMd5New);
+
+            var itemLen = new ListViewItem.ListViewSubItem();
+            try
+            {
+                itemLen.Text = GetLenFile(fileName).ToString();
+            }
+            catch (Exception ex)
+            {
+                itemMsg = ex.Message;
                 itemLen.Text = "";
             }
-            
+
             item.SubItems.Add(itemLen);
 
 
-            ListViewItem.ListViewSubItem itemCount = new ListViewItem.ListViewSubItem();
-            // TODO 暂未定义
-            itemCount.Text = msg;
+            var itemCount = new ListViewItem.ListViewSubItem
+            {
+                Text = itemMsg
+            };
             item.SubItems.Add(itemCount);
 
             listView1.Items.Add(item);
         }
 
-        public static long GetLenFile(string fileName)
+        private static long GetLenFile(string fileName)
         {
-            using (FileStream fileStream = new FileStream(fileName, FileMode.Open))
+            using (var fileStream = new FileStream(fileName, FileMode.Open))
             {
                 return fileStream.Length;
             }
@@ -91,17 +95,18 @@ namespace md5_change
         /// </summary>
         /// <param name="fileName">文件绝对路径</param>
         /// <returns>MD5值</returns>
-        public static string GetMD5HashFromFile(string fileName)
+        private static string GetMd5HashFromFile(string fileName)
         {
-            using (FileStream fileStream = new FileStream(fileName, FileMode.Open))
+            using (var fileStream = new FileStream(fileName, FileMode.Open))
             {
                 System.Security.Cryptography.MD5 md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
-                byte[] retVal = md5.ComputeHash(fileStream);
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < retVal.Length; i++)
+                var retVal = md5.ComputeHash(fileStream);
+                var sb = new StringBuilder();
+                foreach (var t in retVal)
                 {
-                    sb.Append(retVal[i].ToString("x2"));
+                    sb.Append(t.ToString("x2"));
                 }
+
                 return sb.ToString();
             }
         }
@@ -110,30 +115,32 @@ namespace md5_change
         {
             if (listView1.Items.Count == 0)
             {
-                lable_msg.Text = "当前文件列表为空,请添加!";
+                lable_msg.Text = Resources.file_empty;
                 return;
             }
-            SetStatu(true);
-            thread = new Thread(ExecuteChangeMd5);
-            thread.IsBackground = true;
-            thread.Name = "ONCE";
-            thread.Start();
 
+            SetStatus(true);
+            _thread = new Thread(ExecuteChangeMd5)
+            {
+                IsBackground = true,
+                Name = "ONCE"
+            };
+            _thread.Start();
         }
 
-        private void SetStatu(bool s)
+        private void SetStatus(bool s)
         {
-            lock (_lock)
+            lock (Lock)
             {
-                statu = s;
+                _status = s;
             }
         }
 
-        private bool GetStatu()
+        private bool GetStatus()
         {
-            lock (_lock)
+            lock (Lock)
             {
-                return statu;
+                return _status;
             }
         }
 
@@ -141,109 +148,107 @@ namespace md5_change
         {
             RefreshContextBtm(false);
 
-            while (GetStatu())
+            while (GetStatus())
             {
-                Random random = new Random();
-                int newDataLen = 4;
-                byte[] newData = new byte[newDataLen];
-                for (int j = 0; j < newDataLen; j++)
+                var random = new Random();
+                const int newDataLen = 4;
+                var newData = new byte[newDataLen];
+                for (var j = 0; j < newDataLen; j++)
                 {
-                    newData[j] = (byte)random.Next(0, 9);
+                    newData[j] = (byte) random.Next(0, 9);
                 }
 
-                int total_count = listView1.Items.Count;
+                var totalCount = listView1.Items.Count;
                 // bar_process.Maximum = total_count;
-                for (int i = 0; i < total_count; i++)
+                for (var i = 0; i < totalCount; i++)
                 {
-                    if (!GetStatu())
+                    if (!GetStatus())
                     {
-                        lable_msg.Text = "已停止!!";
+                        lable_msg.Text = Resources.stop;
                         return;
                     }
 
                     listView1.EnsureVisible(i);
 
-                    ListViewItem item = listView1.Items[i];
+                    var item = listView1.Items[i];
 
                     if (item.SubItems[1].Text == "" || item.SubItems[3].Text == "")
                     {
                         continue;
-
                     }
-                    System.Drawing.Color backColor = item.BackColor;
-                    
-                    int position = int.Parse(item.SubItems[3].Text);
-                    string fileName = item.Text;
-                    lable_msg.Text = $"Execute : {fileName}";
-                    lable_process.Text = $"{i + 1}/{total_count}";
 
-                    
+                    var backColor = item.BackColor;
+
+                    var position = int.Parse(item.SubItems[3].Text);
+                    var fileName = item.Text;
+                    lable_msg.Text = $@"Execute : {fileName}";
+                    lable_process.Text = $@"{i + 1}/{totalCount}";
+
+
+                    // 这进度条有延迟...
                     // bar_process.Value = i + 1;
-                    
                     item.BackColor = System.Drawing.Color.Blue;
 
                     try
                     {
-                        FileStream writeStream = File.OpenWrite(fileName);
+                        var writeStream = File.OpenWrite(fileName);
                         writeStream.Seek(position, SeekOrigin.Begin);
                         writeStream.Write(newData, 0, newData.Length);
                         writeStream.Close();
 
-                        item.SubItems[2].Text = GetMD5HashFromFile(fileName);
+                        item.SubItems[2].Text = GetMd5HashFromFile(fileName);
                         item.SubItems[4].Text = "";
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         item.SubItems[2].Text = "";
                         item.SubItems[4].Text = ex.Message;
                     }
-                    
+
                     item.BackColor = backColor;
-
-
-
-
                 }
+
                 lable_total.Text = (int.Parse(lable_total.Text) + 1).ToString();
 
                 if (Thread.CurrentThread.Name == "ONCE")
                 {
-                    SetStatu(false);
+                    SetStatus(false);
                     RefreshContextBtm(true);
-                    lable_msg.Text = "执行完毕";
+                    lable_msg.Text = Resources.operation_complete;
                     break;
                 }
 
-                Thread.Sleep(waitTime*1000);
-
+                Thread.Sleep(WaitTime * 1000);
             }
-
         }
 
 
         private void stop_task()
         {
-            if (thread != null)
+            if (_thread != null)
             {
-                while (thread.IsAlive)
+                while (_thread.IsAlive)
                 {
-                    contextMenuStrip1.Items[6].Text = "停止中..";
+                    contextMenuStrip1.Items[6].Text = Resources.strip_stopping;
                     Thread.Sleep(3000);
                 }
             }
-            
+
             RefreshContextBtm(true);
-            contextMenuStrip1.Items[6].Text = "停止";
+            contextMenuStrip1.Items[6].Text = Resources.stop;
             contextMenuStrip1.Items[6].Enabled = true;
-            lable_msg.Text = "执行完毕";
+            lable_msg.Text = Resources.operation_complete;
         }
+
         private void item_stop_Click(object sender, EventArgs e)
         {
-            SetStatu(false);
+            SetStatus(false);
             contextMenuStrip1.Items[6].Enabled = false;
-            Thread thread = new Thread(stop_task);
-            thread.IsBackground = true;
-            thread.Name = "STOP";
+            var thread = new Thread(stop_task)
+            {
+                IsBackground = true,
+                Name = "STOP"
+            };
             thread.Start();
         }
 
@@ -263,6 +268,7 @@ namespace md5_change
             {
                 return;
             }
+
             contextMenuStrip1.Show(listView1, e.Location);
         }
 
@@ -270,22 +276,24 @@ namespace md5_change
         {
             if (listView1.Items.Count == 0)
             {
-                lable_msg.Text = "当前文件列表为空,请添加!";
+                lable_msg.Text = Resources.file_empty;
                 return;
             }
-                
-            SetStatu(true);
-            thread = new Thread(ExecuteChangeMd5);
-            thread.IsBackground = true;
-            thread.Name = "FUCKIT";
-            thread.Start();
+
+            SetStatus(true);
+            _thread = new Thread(ExecuteChangeMd5)
+            {
+                IsBackground = true,
+                Name = "FUCKIT"
+            };
+            _thread.Start();
         }
 
         private void item_remove_Click(object sender, EventArgs e)
         {
-            for (int i = listView1.SelectedItems.Count - 1; i >= 0; i--)
+            for (var i = listView1.SelectedItems.Count - 1; i >= 0; i--)
             {
-                ListViewItem item = listView1.SelectedItems[i];
+                var item = listView1.SelectedItems[i];
                 listView1.Items.Remove(item);
             }
         }
@@ -302,64 +310,61 @@ namespace md5_change
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
-            string[] files = openFileDialog1.FileNames;
-            for (int i = 0; i < files.Length; i++)
+            var files = openFileDialog1.FileNames;
+            foreach (var t in files)
             {
-                AppendFile(files[i]);
+                AppendFile(t);
             }
         }
 
         private bool IsExistsItem(string text)
         {
-            foreach (ListViewItem item in listView1.Items)
-            {
-                if (item.Text == text)
-                    return true;
-            }
-            return false;
+            return listView1.Items.Cast<ListViewItem>().Any(item => item.Text == text);
         }
 
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (this.listView1.SelectedItems.Count == 0)
+            if (listView1.SelectedItems.Count == 0)
                 return;
 
-            string tip = this.listView1.SelectedItems[0].SubItems[4].Text;
+            var tip = listView1.SelectedItems[0].SubItems[4].Text;
             toolTip1.SetToolTip(listView1, tip);
         }
 
         private void item_reload_Click(object sender, EventArgs e)
         {
-            if (this.listView1.SelectedItems.Count == 0)
+            if (listView1.SelectedItems.Count == 0)
                 return;
 
-            string msg = "";
-            string file = this.listView1.SelectedItems[0].Text;
-            ListViewItem.ListViewSubItem itemMd5Src = this.listView1.SelectedItems[0].SubItems[1];
+            var itemMsg = "";
+            var fileName = listView1.SelectedItems[0].Text;
+            var itemMd5Src = this.listView1.SelectedItems[0].SubItems[1];
             try
             {
-                itemMd5Src.Text = GetMD5HashFromFile(file);
+                itemMd5Src.Text = GetMd5HashFromFile(fileName);
             }
             catch (Exception ex)
             {
-                msg = ex.Message;
+                itemMsg = ex.Message;
                 itemMd5Src.Text = "";
             }
-            ListViewItem.ListViewSubItem itemLen = this.listView1.SelectedItems[0].SubItems[3];
+
+            var itemLen = listView1.SelectedItems[0].SubItems[3];
             try
             {
-                itemLen.Text = GetLenFile(file).ToString();
+                itemLen.Text = GetLenFile(fileName).ToString();
             }
             catch (Exception ex)
             {
-                msg = ex.Message;
+                itemMsg = ex.Message;
                 itemLen.Text = "";
             }
-            if (msg == "")
+
+            if (itemMsg == "")
             {
-                this.listView1.SelectedItems[0].SubItems[2].Text = "";
+                listView1.SelectedItems[0].SubItems[2].Text = "";
             }
-            this.listView1.SelectedItems[0].SubItems[4].Text = msg;
+            listView1.SelectedItems[0].SubItems[4].Text = itemMsg;
         }
     }
 }
