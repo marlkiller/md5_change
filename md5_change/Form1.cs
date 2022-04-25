@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Text;
@@ -38,10 +38,18 @@ namespace md5_change
             {
                 return;
             }
-                
+
+            string msg = "";
             ListViewItem item = new ListViewItem(file);
             ListViewItem.ListViewSubItem itemMd5Src = new ListViewItem.ListViewSubItem();
-            itemMd5Src.Text = GetMD5HashFromFile(file);
+            try 
+            { 
+                itemMd5Src.Text = GetMD5HashFromFile(file);
+            }catch(Exception ex)
+            {
+                msg = ex.Message;
+                itemMd5Src.Text = "";
+            }
             item.SubItems.Add(itemMd5Src);
 
             ListViewItem.ListViewSubItem itemMd5New = new ListViewItem.ListViewSubItem();
@@ -49,13 +57,22 @@ namespace md5_change
             item.SubItems.Add(itemMd5New);
 
             ListViewItem.ListViewSubItem itemLen = new ListViewItem.ListViewSubItem();
-            itemLen.Text = GetLenFile(file).ToString();
+            try
+            {
+                itemLen.Text = GetLenFile(file).ToString();
+            }
+            catch (Exception ex)
+            {
+                msg = ex.Message;
+                itemLen.Text = "";
+            }
+            
             item.SubItems.Add(itemLen);
 
 
             ListViewItem.ListViewSubItem itemCount = new ListViewItem.ListViewSubItem();
             // TODO 暂未定义
-            itemCount.Text = "TBD_msg";
+            itemCount.Text = msg;
             item.SubItems.Add(itemCount);
 
             listView1.Items.Add(item);
@@ -143,25 +160,48 @@ namespace md5_change
                         lable_msg.Text = "已停止!!";
                         return;
                     }
-                    
+
                     listView1.EnsureVisible(i);
-                    
+
                     ListViewItem item = listView1.Items[i];
+
+                    if (item.SubItems[1].Text == "" || item.SubItems[3].Text == "")
+                    {
+                        continue;
+
+                    }
                     System.Drawing.Color backColor = item.BackColor;
-                    item.BackColor = System.Drawing.Color.Blue;
+                    
                     int position = int.Parse(item.SubItems[3].Text);
                     string fileName = item.Text;
                     lable_msg.Text = $"Execute : {fileName}";
                     lable_process.Text = $"{i + 1}/{total_count}";
+
+                    
                     // bar_process.Value = i + 1;
+                    
+                    item.BackColor = System.Drawing.Color.Blue;
 
-                    FileStream writeStream = File.OpenWrite(fileName);
-                    writeStream.Seek(position, SeekOrigin.Begin);
-                    writeStream.Write(newData, 0, newData.Length);
-                    writeStream.Close();
+                    try
+                    {
+                        FileStream writeStream = File.OpenWrite(fileName);
+                        writeStream.Seek(position, SeekOrigin.Begin);
+                        writeStream.Write(newData, 0, newData.Length);
+                        writeStream.Close();
 
-                    item.SubItems[2].Text = GetMD5HashFromFile(fileName);
+                        item.SubItems[2].Text = GetMD5HashFromFile(fileName);
+                        item.SubItems[4].Text = "";
+                    }
+                    catch(Exception ex)
+                    {
+                        item.SubItems[2].Text = "";
+                        item.SubItems[4].Text = ex.Message;
+                    }
+                    
                     item.BackColor = backColor;
+
+
+
 
                 }
                 lable_total.Text = (int.Parse(lable_total.Text) + 1).ToString();
@@ -187,20 +227,20 @@ namespace md5_change
             {
                 while (thread.IsAlive)
                 {
-                    contextMenuStrip1.Items[5].Text = "停止中..";
+                    contextMenuStrip1.Items[6].Text = "停止中..";
                     Thread.Sleep(3000);
                 }
             }
             
             RefreshContextBtm(true);
-            contextMenuStrip1.Items[5].Text = "停止";
-            contextMenuStrip1.Items[5].Enabled = true;
+            contextMenuStrip1.Items[6].Text = "停止";
+            contextMenuStrip1.Items[6].Enabled = true;
             lable_msg.Text = "执行完毕";
         }
         private void item_stop_Click(object sender, EventArgs e)
         {
             SetStatu(false);
-            contextMenuStrip1.Items[5].Enabled = false;
+            contextMenuStrip1.Items[6].Enabled = false;
             Thread thread = new Thread(stop_task);
             thread.IsBackground = true;
             thread.Name = "STOP";
@@ -212,7 +252,8 @@ namespace md5_change
             contextMenuStrip1.Items[0].Enabled = flag;
             contextMenuStrip1.Items[1].Enabled = flag;
             contextMenuStrip1.Items[2].Enabled = flag;
-            contextMenuStrip1.Items[4].Enabled = flag;
+            contextMenuStrip1.Items[3].Enabled = flag;
+            contextMenuStrip1.Items[5].Enabled = flag;
         }
 
 
@@ -278,6 +319,47 @@ namespace md5_change
             return false;
         }
 
-       
+        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (this.listView1.SelectedItems.Count == 0)
+                return;
+
+            string tip = this.listView1.SelectedItems[0].SubItems[4].Text;
+            toolTip1.SetToolTip(listView1, tip);
+        }
+
+        private void item_reload_Click(object sender, EventArgs e)
+        {
+            if (this.listView1.SelectedItems.Count == 0)
+                return;
+
+            string msg = "";
+            string file = this.listView1.SelectedItems[0].Text;
+            ListViewItem.ListViewSubItem itemMd5Src = this.listView1.SelectedItems[0].SubItems[1];
+            try
+            {
+                itemMd5Src.Text = GetMD5HashFromFile(file);
+            }
+            catch (Exception ex)
+            {
+                msg = ex.Message;
+                itemMd5Src.Text = "";
+            }
+            ListViewItem.ListViewSubItem itemLen = this.listView1.SelectedItems[0].SubItems[3];
+            try
+            {
+                itemLen.Text = GetLenFile(file).ToString();
+            }
+            catch (Exception ex)
+            {
+                msg = ex.Message;
+                itemLen.Text = "";
+            }
+            if (msg == "")
+            {
+                this.listView1.SelectedItems[0].SubItems[2].Text = "";
+            }
+            this.listView1.SelectedItems[0].SubItems[4].Text = msg;
+        }
     }
 }
