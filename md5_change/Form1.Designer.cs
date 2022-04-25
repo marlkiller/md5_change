@@ -1,4 +1,4 @@
-﻿
+
 namespace md5_change
 {
     partial class Form1
@@ -51,6 +51,8 @@ namespace md5_change
             this.item_start_auto = new System.Windows.Forms.ToolStripMenuItem();
             this.item_stop = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.item_reload = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -68,10 +70,11 @@ namespace md5_change
             this.listView1.HideSelection = false;
             this.listView1.Location = new System.Drawing.Point(12, 12);
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(801, 233);
+            this.listView1.Size = new System.Drawing.Size(1020, 233);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
+            this.listView1.SelectedIndexChanged += new System.EventHandler(this.listView1_SelectedIndexChanged);
             this.listView1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.listView1_MouseDown);
             // 
             // file
@@ -104,9 +107,9 @@ namespace md5_change
             this.lable_process,
             this.bar_process,
             this.lable_total});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 282);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 254);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(825, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(1044, 22);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -120,7 +123,7 @@ namespace md5_change
             // lable_process
             // 
             this.lable_process.Name = "lable_process";
-            this.lable_process.Size = new System.Drawing.Size(321, 17);
+            this.lable_process.Size = new System.Drawing.Size(430, 17);
             this.lable_process.Spring = true;
             this.lable_process.Text = "lable_process";
             this.lable_process.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -133,7 +136,7 @@ namespace md5_change
             // lable_total
             // 
             this.lable_total.Name = "lable_total";
-            this.lable_total.Size = new System.Drawing.Size(321, 17);
+            this.lable_total.Size = new System.Drawing.Size(430, 17);
             this.lable_total.Spring = true;
             this.lable_total.Text = "0";
             this.lable_total.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -144,37 +147,38 @@ namespace md5_change
             this.item_append,
             this.item_remove,
             this.item_remove_all,
+            this.item_reload,
             this.toolStripSeparator1,
             this.item_start,
             this.item_stop});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(149, 120);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 164);
             // 
             // item_append
             // 
             this.item_append.Name = "item_append";
-            this.item_append.Size = new System.Drawing.Size(148, 22);
+            this.item_append.Size = new System.Drawing.Size(180, 22);
             this.item_append.Text = "添加文件";
             this.item_append.Click += new System.EventHandler(this.item_append_Click);
             // 
             // item_remove
             // 
             this.item_remove.Name = "item_remove";
-            this.item_remove.Size = new System.Drawing.Size(148, 22);
+            this.item_remove.Size = new System.Drawing.Size(180, 22);
             this.item_remove.Text = "刪除当前文件";
             this.item_remove.Click += new System.EventHandler(this.item_remove_Click);
             // 
             // item_remove_all
             // 
             this.item_remove_all.Name = "item_remove_all";
-            this.item_remove_all.Size = new System.Drawing.Size(148, 22);
+            this.item_remove_all.Size = new System.Drawing.Size(180, 22);
             this.item_remove_all.Text = "刪除所有文件";
             this.item_remove_all.Click += new System.EventHandler(this.item_remove_all_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(145, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
             // 
             // item_start
             // 
@@ -182,27 +186,27 @@ namespace md5_change
             this.item_start_once,
             this.item_start_auto});
             this.item_start.Name = "item_start";
-            this.item_start.Size = new System.Drawing.Size(148, 22);
+            this.item_start.Size = new System.Drawing.Size(180, 22);
             this.item_start.Text = "开始";
             // 
             // item_start_once
             // 
             this.item_start_once.Name = "item_start_once";
-            this.item_start_once.Size = new System.Drawing.Size(136, 22);
+            this.item_start_once.Size = new System.Drawing.Size(180, 22);
             this.item_start_once.Text = "一次";
             this.item_start_once.Click += new System.EventHandler(this.item_start_once_Click);
             // 
             // item_start_auto
             // 
             this.item_start_auto.Name = "item_start_auto";
-            this.item_start_auto.Size = new System.Drawing.Size(136, 22);
+            this.item_start_auto.Size = new System.Drawing.Size(180, 22);
             this.item_start_auto.Text = "循环无限次";
             this.item_start_auto.Click += new System.EventHandler(this.item_start_auto_Click);
             // 
             // item_stop
             // 
             this.item_stop.Name = "item_stop";
-            this.item_stop.Size = new System.Drawing.Size(148, 22);
+            this.item_stop.Size = new System.Drawing.Size(180, 22);
             this.item_stop.Text = "停止";
             this.item_stop.Click += new System.EventHandler(this.item_stop_Click);
             // 
@@ -213,11 +217,18 @@ namespace md5_change
             this.openFileDialog1.Multiselect = true;
             this.openFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1_FileOk);
             // 
+            // item_reload
+            // 
+            this.item_reload.Name = "item_reload";
+            this.item_reload.Size = new System.Drawing.Size(180, 22);
+            this.item_reload.Text = "重新载入当前文件";
+            this.item_reload.Click += new System.EventHandler(this.item_reload_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(825, 304);
+            this.ClientSize = new System.Drawing.Size(1044, 276);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.listView1);
             this.Name = "Form1";
@@ -254,6 +265,8 @@ namespace md5_change
         private System.Windows.Forms.ToolStripMenuItem item_start_auto;
         private System.Windows.Forms.ToolStripMenuItem item_stop;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.ToolStripMenuItem item_reload;
     }
 }
 
