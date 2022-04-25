@@ -143,7 +143,9 @@ namespace md5_change
                         lable_msg.Text = "已停止!!";
                         return;
                     }
-
+                    
+                    listView1.EnsureVisible(i);
+                    
                     ListViewItem item = listView1.Items[i];
                     System.Drawing.Color backColor = item.BackColor;
                     item.BackColor = System.Drawing.Color.Blue;
